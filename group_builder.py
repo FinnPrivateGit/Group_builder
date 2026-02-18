@@ -2,14 +2,9 @@ import pandas as pd
 
 file_name = "Fragebogen_Basis.xlsx"
 
-# Erste Zeile überspringen (nur Überschriften)
 df = pd.read_excel(file_name)
-
-# Erste Spalte entfernen (Zeitstempel)
-df = df.iloc[:, 1:]
-
-# Leere Zeilen entfernen
-df = df.dropna()
+df = df.iloc[:, 1:] # erste Spalte (Zeit) entfernen
+df = df.dropna() # leere Zeilen entfernen
 
 persons = []
 
@@ -29,7 +24,19 @@ for _, row in df.iterrows():
         "kategorie": category
     })
 
-print("Anzahl Personen:", len(persons))
-for person in persons:
-    print(person)
+
+def distanz(p1: dict, p2: dict) -> int:
+    """
+    Distanz nach diesem System:
+    - Likert: Summe der absoluten Differenzen (5 Fragen)
+    - Kategorie: +3 falls unterschiedlich, sonst +0
+    """
+    # Likert-Distanz (Manhattan)
+    d = sum(abs(a - b) for a, b in zip(p1["likert"], p2["likert"]))
+
+    # Kategorie-Strafe
+    if p1["kategorie"] != p2["kategorie"]:
+        d += 3
+
+    return d
 
