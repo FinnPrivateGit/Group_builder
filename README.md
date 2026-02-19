@@ -24,14 +24,68 @@ transparent bleiben.
 
 # Wie der Code funktioniert
 
-Er besteht aus sechs Schritten:
+Er besteht aus sieben Schritten:
 
+    0. Performance monitoring
     1. Daten einlesen
     2. Distanz zwischen Personen berechnen
     3. Distanzmatrix berechnen
     4. Gruppen bewerten
     5. Gruppen optimieren
     6. Ergebnis ausgeben
+
+------------------------------------------------------------------------
+
+## 0. Performance Monitoring (optional)
+
+Das Script enthält einen optionalen Performance-Monitor zur Analyse der Laufzeit und der Anzahl ausgeführter Berechnungen.
+
+Dieser dient primär zur Evaluation des Algorithmus und zur Untersuchung der Skalierbarkeit bei steigender Teilnehmerzahl (und weil ich Lust darauf hatte).
+
+### Aktivierung
+
+Der Performance-Monitor wird nur aktiviert, wenn das Script mit folgendem Flag gestartet wird:
+```
+    python .\group_builder.py --performance
+```
+
+
+Ohne dieses Flag läuft das Programm normal ohne zusätzliche Messungen.
+
+---
+
+### Gemessene Metriken
+
+Der Performance-Monitor misst zwei Kennzahlen:
+
+#### Anzahl Operationen
+
+Zählt die wichtigsten algorithmischen Berechnungen während der Ausführung.
+
+Dies dient als approximatives Mass für die algorithmische Komplexität.
+
+---
+
+#### Gesamtlaufzeit
+
+Misst die gesamte Ausführungsdauer des Scripts in Sekunden.
+
+Die Messung startet beim Programmstart und endet nach der Gruppenausgabe.
+
+
+---
+
+### Warum Performance Monitoring?
+
+Das Performance Monitoring ermöglicht:
+
+- Analyse der Skalierbarkeit bei unterschiedlichen Teilnehmerzahlen
+- Vergleich verschiedener Parameter oder Gewichtungen
+- Bewertung von Optimierungsschritten
+- Verständnis der Laufzeitkomplexität des heuristischen Ansatzes
+
+Die Messung ist optional implementiert, damit im normalen Betrieb keine zusätzliche Rechenzeit entsteht.
+
 
 ------------------------------------------------------------------------
 
