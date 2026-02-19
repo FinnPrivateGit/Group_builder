@@ -1,11 +1,37 @@
 import math
 import random
 import pandas as pd
+import argparse
+import time
+
+
+"""
+    0. Performance monitor
+    Zählt Anzahl Operationen und Dauer
+    Nur wenn das Script mit --performance ausgeführt wird
+"""
+parser = argparse.ArgumentParser()
+parser.add_argument("--performance", action="store_true")
+args = parser.parse_args()
+
+PERFORMANCE = args.performance
+OP_COUNT = 0
+
+def count_op(n=1):
+    global OP_COUNT
+    if PERFORMANCE:
+        OP_COUNT += n
+
+START_TIME = time.perf_counter() if PERFORMANCE else None
+
 
 """
     1. Daten aus Excel File einlesen
 """
 file_name = "Fragebogen_Basis.xlsx"
+#file_name = "Fragebogen_Basis_30_Test.xlsx" # Performance testen, weil ich neugierig bin
+#file_name = "Fragebogen_Basis_100_Test.xlsx" # Performance testen, weil ich neugierig bin
+
 df = pd.read_excel(file_name)
 df = df.iloc[:, 1:] # erste Spalte (Zeit) entfernen
 df = df.dropna() # leere Zeilen entfernen
@@ -38,11 +64,15 @@ if len(persons) < 20:
     - Kategorie: +4 falls unterschiedlich, sonst +0
 """
 def distanz(p1: dict, p2: dict) -> int:
+    count_op()
+
     # Likert-Distanz (Manhattan)
     d = sum(abs(a - b) for a, b in zip(p1["likert"], p2["likert"]))
+    count_op(len(p1["likert"]))  # Anzahl Likert-Vergleiche
 
     # Kategorie-Strafe
     if p1["kategorie"] != p2["kategorie"]:
+        count_op()
         d += 4
 
     return d
@@ -56,6 +86,7 @@ def build_dist_matrix(persons: list[dict]) -> list[list[int]]:
     m = [[0] * n for _ in range(n)]
     for i in range(n):
         for j in range(i + 1, n):
+            count_op()
             d = distanz(persons[i], persons[j])
             m[i][j] = d
             m[j][i] = d
@@ -72,6 +103,7 @@ def group_cost(group: list[int], dist_matrix: list[list[int]]) -> int:
     cost = 0
     for a_i in range(len(group)):
         for b_i in range(a_i + 1, len(group)):
+            count_op()
             a = group[a_i]
             b = group[b_i]
             cost += dist_matrix[a][b]
@@ -84,6 +116,7 @@ def total_cost(groups: list[list[int]], dist_matrix: list[list[int]]) -> int:
 
 def cost_if_added(group: list[int], person_idx: int, dist_matrix: list[list[int]]) -> int:
     """Zusatzkosten, wenn person_idx zur Gruppe hinzugefügt wird"""
+    count_op(len(group))
     return sum(dist_matrix[person_idx][x] for x in group)
 
 
@@ -108,6 +141,8 @@ def pick_seeds_farthest(n: int, k: int, dist_matrix: list[list[int]]) -> list[in
         best = None
         best_score = -1
         for i in all_idx:
+            count_op()
+
             if i in seeds:
                 continue
             # Abstand zu nächstem Seed maximieren (maximin)
@@ -139,6 +174,8 @@ def greedy_fill_groups(n: int, k: int, min_size: int, max_size: int, dist_matrix
         best_delta = math.inf
 
         for gi, g in enumerate(groups):
+            count_op()
+
             if len(g) >= max_size:
                 continue
             delta = cost_if_added(g, p, dist_matrix)
@@ -183,6 +220,8 @@ def rebalance_to_min_size(groups: list[list[int]], min_size: int, max_size: int,
             for gi_donor in donors:
                 donor = groups[gi_donor]
                 for idx_in_donor in range(len(donor)):
+                    count_op()
+
                     p = donor[idx_in_donor]
 
                     if len(donor) - 1 < min_size:
@@ -245,6 +284,8 @@ def improve_by_swaps(groups: list[list[int]], min_size: int, max_size: int, dist
 
                 for a_idx in range(len(g1)):
                     for b_idx in range(len(g2)):
+                        count_op()
+
                         delta = try_swap(g1i, a_idx, g2i, b_idx)
                         if delta < 0:
                             # swap ausführen
@@ -279,6 +320,8 @@ def make_groups(persons: list[dict],
     best_cost = math.inf
 
     for r in range(restarts):
+        count_op()
+
         # kleine Variation pro restart
         random.seed(random_seed + r)
 
@@ -316,3 +359,10 @@ for gi, g in enumerate(groups_idx, start=1):
     print(f"\nGruppe {gi} (n={len(g)}, kosten={group_cost(g, dist_matrix)}):")
     for n, c in zip(names, cats):
         print(f"  - {n}  ({c})")
+
+
+if PERFORMANCE:
+    elapsed = time.perf_counter() - START_TIME
+    print("\n--------- PERFORMANCE ---------")
+    print("Anzahl Operationen:", OP_COUNT)
+    print(f"Laufzeit gesamt: {elapsed:.3f} Sekunden")
